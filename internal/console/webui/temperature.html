@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <title>温控 - 冷链物流温控平台</title>
+  <style>
+    body { font-family: "Microsoft YaHei", sans-serif; margin: 2rem; background: #f6f8fa; }
+    h1 { color: #1f4e79; }
+    table { border-collapse: collapse; width: 100%; background: #fff; }
+    th, td { border: 1px solid #d0d7de; padding: 0.5rem; text-align: left; }
+    th { background: #eef1f5; }
+  </style>
+</head>
+<body>
+  <h1>温控读数</h1>
+  <label>探点 ID：<input id="probe" placeholder="留空查全部"></label>
+  <button onclick="load()">查询</button>
+  <table>
+    <thead><tr><th>读数 ID</th><th>探点</th><th>批次</th><th>温度 ℃</th><th>记录时间</th></tr></thead>
+    <tbody id="rows"></tbody>
+  </table>
+  <script>
+    function load() {
+      const probe = document.getElementById("probe").value.trim();
+      const url = probe ? "/api/temperature?probe_id=" + encodeURIComponent(probe) : "/api/temperature";
+      fetch(url).then(r => r.json()).then(items => {
+        const rows = document.getElementById("rows");
+        rows.innerHTML = "";
+        items.forEach(item => {
+          const tr = document.createElement("tr");
+          [item.id, item.probe_id, item.batch_id || "-", item.celsius, item.recorded_at].forEach(v => {
+            const td = document.createElement("td");
+            td.textContent = v;
+            tr.appendChild(td);
+          });
+          rows.appendChild(tr);
+        });
+      });
+    }
+    load();
+  </script>
+</body>
+</html>
