@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <title>探点 - 冷链物流温控平台</title>
+  <style>
+    body { font-family: "Microsoft YaHei", sans-serif; margin: 2rem; background: #f6f8fa; }
+    h1 { color: #1f4e79; }
+    table { border-collapse: collapse; width: 100%; background: #fff; }
+    th, td { border: 1px solid #d0d7de; padding: 0.5rem; text-align: left; }
+    th { background: #eef1f5; }
+  </style>
+</head>
+<body>
+  <h1>温度探点</h1>
+  <table>
+    <thead><tr><th>探点 ID</th><th>名称</th><th>命名空间</th><th>绑定批次</th><th>创建时间</th></tr></thead>
+    <tbody id="rows"></tbody>
+  </table>
+  <script>
+    fetch("/api/probes").then(r => r.json()).then(items => {
+      const rows = document.getElementById("rows");
+      items.forEach(p => {
+        const tr = document.createElement("tr");
+        [p.id, p.name, p.namespace_id, p.batch_id || "-", p.created_at].forEach(v => {
+          const td = document.createElement("td");
+          td.textContent = v;
+          tr.appendChild(td);
+        });
+        rows.appendChild(tr);
+      });
+    });
+  </script>
+</body>
+</html>
