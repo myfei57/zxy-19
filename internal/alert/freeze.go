@@ -9,6 +9,11 @@ import (
 
 // Freeze handles an over-temperature reading for a batch and raises the
 // frozen state together with the overheat evidence.
+//
+// The overheat record is persisted before the batch is frozen so that the
+// freezing step always has durable evidence to lean on. Were the order
+// reversed, a failure mid-way could leave a batch frozen with no overheat
+// record on file, leaving the later thaw without grounds.
 func (s *Service) Freeze(batchID string, reading data.TemperatureReading) (*data.Alert, error) {
 	record := data.OverheatRecord{
 		ID:        data.NewID(),
@@ -16,10 +21,10 @@ func (s *Service) Freeze(batchID string, reading data.TemperatureReading) (*data
 		Reading:   reading,
 		CreatedAt: time.Now().UTC(),
 	}
-	if err := s.freezeState(batchID); err != nil {
+	if err := s.temp.AppendOverheat(batchID, record); err != nil {
 		return nil, err
 	}
-	if err := s.temp.AppendOverheat(batchID, record); err != nil {
+	if err := s.freezeState(batchID); err != nil {
 		return nil, err
 	}
 	alertRecord := &data.Alert{
