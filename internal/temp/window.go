@@ -42,16 +42,18 @@ func (s *Service) AdvanceCursor(batchID string, position int) error {
 }
 
 // FinalizeWindow persists the aggregated window result and advances the
-// window cursor for the batch.
+// window cursor for the batch. The result is durably appended before the
+// cursor advances, so a crash between the two writes leaves the window
+// recomputable instead of silently skipped.
 func (s *Service) FinalizeWindow(batchID string, result data.WindowResult) error {
 	cursor, err := s.Cursor(batchID)
 	if err != nil {
 		return err
 	}
-	if err := s.AdvanceCursor(batchID, cursor.Position+1); err != nil {
+	if err := s.AppendResult(batchID, result); err != nil {
 		return err
 	}
-	return s.AppendResult(batchID, result)
+	return s.AdvanceCursor(batchID, cursor.Position+1)
 }
 
 // CloseWindow finalizes an open window: the summary is persisted first and
