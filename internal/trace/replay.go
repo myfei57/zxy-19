@@ -1,13 +1,18 @@
 package trace
 
 import (
-	"fmt"
+	"sort"
 
 	"coldchain/internal/data"
 )
 
 // Replay returns the temperature windows of one batch for a single
-// generation. Generation 0 resolves to the latest generation.
+// generation. Generation 0 resolves to the latest generation. Replay must
+// never mix windows across generations: a later re-aggregation of the same
+// time slot is a separate record, not a patch over the earlier one, so
+// loading by time slot and picking one generation would silently let an older
+// generation overwrite a newer one. Only the records of the resolved
+// generation are loaded, ordered by start time for deterministic display.
 func (s *Service) Replay(batchID string, generation int) ([]data.Window, error) {
 	if generation == 0 {
 		latest, err := s.Latest(batchID)
@@ -16,21 +21,12 @@ func (s *Service) Replay(batchID string, generation int) ([]data.Window, error) 
 		}
 		generation = latest
 	}
-	all, err := s.temp.LoadAllWindows(batchID)
+	windows, err := s.temp.LoadWindows(batchID, generation)
 	if err != nil {
 		return nil, err
 	}
-	bySlot := map[string]data.Window{}
-	for _, win := range all {
-		key := fmt.Sprintf("%d|%d", win.Start.Unix(), win.End.Unix())
-		current, exists := bySlot[key]
-		if !exists || win.Generation < current.Generation {
-			bySlot[key] = win
-		}
-	}
-	out := make([]data.Window, 0, len(bySlot))
-	for _, win := range bySlot {
-		out = append(out, win)
-	}
-	return out, nil
+	sort.Slice(windows, func(i, j int) bool {
+		return windows[i].Start.Before(windows[j].Start)
+	})
+	return windows, nil
 }
