@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <title>批次 - 冷链物流温控平台</title>
+  <style>
+    body { font-family: "Microsoft YaHei", sans-serif; margin: 2rem; background: #f6f8fa; }
+    h1 { color: #1f4e79; }
+    table { border-collapse: collapse; width: 100%; background: #fff; }
+    th, td { border: 1px solid #d0d7de; padding: 0.5rem; text-align: left; }
+    th { background: #eef1f5; }
+    .frozen { color: #b02a37; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h1>冷链批次</h1>
+  <table>
+    <thead><tr><th>批次 ID</th><th>编码</th><th>状态</th><th>冻结</th><th>更新时间</th></tr></thead>
+    <tbody id="rows"></tbody>
+  </table>
+  <script>
+    fetch("/api/batches").then(r => r.json()).then(items => {
+      const rows = document.getElementById("rows");
+      items.forEach(b => {
+        const tr = document.createElement("tr");
+        [b.id, b.code, b.status].forEach(v => {
+          const td = document.createElement("td");
+          td.textContent = v;
+          tr.appendChild(td);
+        });
+        const flag = document.createElement("td");
+        flag.textContent = b.frozen ? "是" : "否";
+        if (b.frozen) flag.className = "frozen";
+        tr.appendChild(flag);
+        const updated = document.createElement("td");
+        updated.textContent = b.updated_at;
+        tr.appendChild(updated);
+        rows.appendChild(tr);
+      });
+    });
+  </script>
+</body>
+</html>
