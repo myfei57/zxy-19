@@ -26,5 +26,7 @@ func (s *Service) Publish(name, metric string, threshold float64) (*data.Rule, e
 	if err := s.store.WriteJSON(s.currentPath(), r); err != nil {
 		return nil, err
 	}
+	// Drop any cached snapshot so subsequent checks pick up the new threshold.
+	s.snapshot = nil
 	return r, nil
 }
