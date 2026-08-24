@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <title>审计 - 冷链物流温控平台</title>
+  <style>
+    body { font-family: "Microsoft YaHei", sans-serif; margin: 2rem; background: #f6f8fa; }
+    h1 { color: #1f4e79; }
+    table { border-collapse: collapse; width: 100%; background: #fff; }
+    th, td { border: 1px solid #d0d7de; padding: 0.5rem; text-align: left; }
+    th { background: #eef1f5; }
+  </style>
+</head>
+<body>
+  <h1>操作审计</h1>
+  <table>
+    <thead><tr><th>事件 ID</th><th>操作者</th><th>动作</th><th>对象</th><th>结果</th><th>时间</th></tr></thead>
+    <tbody id="rows"></tbody>
+  </table>
+  <script>
+    fetch("/api/audit").then(r => r.json()).then(items => {
+      const rows = document.getElementById("rows");
+      items.forEach(event => {
+        const tr = document.createElement("tr");
+        [event.id, event.actor, event.action, event.subject, event.ok ? "成功" : "失败", event.created_at].forEach(v => {
+          const td = document.createElement("td");
+          td.textContent = v;
+          tr.appendChild(td);
+        });
+        rows.appendChild(tr);
+      });
+    });
+  </script>
+</body>
+</html>
